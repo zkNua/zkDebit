@@ -1,0 +1,5 @@
+CardVerifier
+https://holesky.etherscan.io/address/0xa1e60fbc7e5c0bf3d07b18d6caf0b7b4fe84103b
+
+CardVerifierRouter
+https://holesky.etherscan.io/address/0x4277092B102fC0122f2c19d117927A1Cc142b949
