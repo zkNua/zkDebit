@@ -1,12 +1,15 @@
-// app.js
 
 const express = require('express');
-const app = express();
+const snarkjs = require('snarkjs');
+const fs = require('fs');
 const { execSync } = require('child_process');
+const circomlibjs = require("circomlibjs");
+const crypto = require('crypto');
 
 // Define a port
 const PORT = process.env.PORT || 3000;
 
+app = express();
 // Set up a route
 app.get('/', (req, res) => {
   res.send('Hello, Express!');
@@ -41,7 +44,7 @@ function compileAndSetupCircuits() {
   runCommand('npx snarkjs zkey export verificationkey cardVerification_0000.zkey cardVerification_verification_key.json');
   
   // Run this script to generating verifier contract 
-    // runCommand("snarkjs zkey export solidityverifier cardVerification_0000.zkey hardhat/contracts/CardVerifier.sol");
+    runCommand("snarkjs zkey export solidityverifier cardVerification_0000.zkey CardVerifier.sol");
 }
 
 // Start the server
