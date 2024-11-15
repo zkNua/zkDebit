@@ -1,0 +1,1 @@
+rm -rf ./cardSetup_0000.zkey ./cardSetup_verification_key.json ./cardSetup.r1cs ./cardSetup.sym ./cardVerification_0000.zkey ./cardVerification_verification_key.json ./cardVerification.r1cs ./cardVerification.sym ./powersOfTau28_hez_final_12.ptau ./cardVerification_js ./cardSetup_js
