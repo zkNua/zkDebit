@@ -16,6 +16,16 @@ app.use(cors());
 app.use(express.json());
 const PORT = 4000;
 
+// interface in api backend 
+// mock response interface {message : "" , payload ""}
+const ITransactionStatus = {
+    Unknown: 0,
+    Pending: 1,
+    Rejected: 2,
+    Approved: 3
+};
+
+
 // mock card with the balance 
 let cardsDataBase = [
     {
