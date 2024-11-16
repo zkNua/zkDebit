@@ -87,31 +87,49 @@ app.post('/create-transaction', async (req, res) => {
 
 // 4. Endpoint to send cardVerification.wasm and cardVerification_0000.zkey to the user for generating verify proof 
 app.get('/user/request/card-verification',async  (req, res) => {
- const { transaction_hashed , amount , check_pi3 } = req.body;
-    // check that the user's card number is stored in cards offchain
-    const exists = transaction_log.find(
-        (transaction) => transaction.transaction_hashed === transaction_hashed
-    );
-    if (exists){
-        res.status(400).json({ message: 'Transaction hashed is already declare tell shop re generate it' , payload : ""});
-        return; 
-    }
-    const certain_card = cardAndProof.find(card => card.pi3 === check_pi3);
-    if (!certain_card) {
-        console.log("Card not found");
-        res.status(400).json({ message: 'Card not found' , payload : ""});
-        return;
-    }
-    transaction_log.push({ transaction_hashed , amount });
-    OnCreatingTransactionHashed(transaction_hashed,amount); 
-    res.status(200).json({ message: 'Transaction order created onchain', payload: transaction_hashed });
-    return;
+    res.zip([
+        { path: './cardVerification_0000.zkey', name: 'cardVerification_0000.zkey' },
+        { path: './cardVerification_js/cardVerification.wasm', name: 'cardVerification.wasm' }
+    ]);
 });
 
 // 5. Endpoint to check the transaction status
 app.get('/shop/check-transaction/:transaction_hashed', async (req, res) => {
     const { transaction_hashed } = req.params;
-
+    // Querry transaction_hashed onchain and check is valid & onchain
+    // const transactionInfo = await OnGetTransactionInfo(transaction_hashed) ; 
+    transactionInfo = {amount : 500 , status : 1}
+    // interface on chain ITransactionStatus = {
+    //     Unknown: 0,
+    //     Pending: 1,
+    //     Rejected: 2,
+    //     Approved: 3
+    // };
+    
+    switch (transactionInfo.status) {
+        case ITransactionStatus.Unknown:
+            res.status(400).json({ message: 'Transaction order does not exist', payload: "" });
+            console.log("Transaction status is Unknown.");
+            return;
+        case ITransactionStatus.Pending:
+            res.status(400).json({ message: 'Transaction order waiting proof from user', payload: "" });
+            console.log("Transaction is Pending. Please wait for approval.");
+            return;
+        case ITransactionStatus.Rejected:
+            res.status(400).json({ message: 'Transaction failed. Invalid Proof from user', payload: "" });
+            console.log("Transaction has been Rejected. Please check details.");
+            return ;
+        case ITransactionStatus.Approved:
+            if (cardsDataBase[1].balance < transactionInfo.amount ){
+                res.status(400).json({ message: 'Tranaction succeed. But insufficient balance', payload: "" });
+                return;
+            }
+            cardsDataBase[0].balance -= transactionInfo.amount
+            cardsDataBase[1].balance += transactionInfo.amount
+            res.status(200).json({ message: 'Tranaction succeed. Proof from user is valid', payload: "" });
+            console.log("Transaction has been Approved!");
+            return;
+    }
 });
 
 // Start the server
