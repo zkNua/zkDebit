@@ -64,12 +64,48 @@ app.post('/store-setup', async (req, res) => {
 
 // 3. Endpoint to create a transaction order from shop initialize onchain
 app.post('/create-transaction', async (req, res) => {
-
+    const { transaction_hashed , amount , check_pi3 } = req.body;
+    // check that the user's card number is stored in cards offchain
+    const exists = transaction_log.find(
+        (transaction) => transaction.transaction_hashed === transaction_hashed
+    );
+    if (exists){
+        res.status(400).json({ message: 'Transaction hashed is already declare tell shop re generate it' , payload : ""});
+        return; 
+    }
+    const certain_card = cardAndProof.find(card => card.pi3 === check_pi3);
+    if (!certain_card) {
+        console.log("Card not found");
+        res.status(400).json({ message: 'Card not found' , payload : ""});
+        return;
+    }
+    transaction_log.push({ transaction_hashed , amount });
+    // OnCreatingTransactionHashed(transaction_hashed,amount); 
+    res.status(200).json({ message: 'Transaction order created onchain', payload: transaction_hashed });
+    return;
 });
 
 // 4. Endpoint to send cardVerification.wasm and cardVerification_0000.zkey to the user for generating verify proof 
-app.get('/user/request/card-verification', (req, res) => {
-
+app.get('/user/request/card-verification',async  (req, res) => {
+ const { transaction_hashed , amount , check_pi3 } = req.body;
+    // check that the user's card number is stored in cards offchain
+    const exists = transaction_log.find(
+        (transaction) => transaction.transaction_hashed === transaction_hashed
+    );
+    if (exists){
+        res.status(400).json({ message: 'Transaction hashed is already declare tell shop re generate it' , payload : ""});
+        return; 
+    }
+    const certain_card = cardAndProof.find(card => card.pi3 === check_pi3);
+    if (!certain_card) {
+        console.log("Card not found");
+        res.status(400).json({ message: 'Card not found' , payload : ""});
+        return;
+    }
+    transaction_log.push({ transaction_hashed , amount });
+    OnCreatingTransactionHashed(transaction_hashed,amount); 
+    res.status(200).json({ message: 'Transaction order created onchain', payload: transaction_hashed });
+    return;
 });
 
 // 5. Endpoint to check the transaction status
