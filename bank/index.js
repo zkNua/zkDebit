@@ -1,6 +1,12 @@
 const express = require('express');
 const snarkjs  = require('snarkjs') ; 
 
+const {ethers } = require('ethers');
+const dotenv = require("dotenv");
+
+dotenv.config();
+const abi  = require("./abi_bank.json");
+
 const fs = require('fs');
 const cors = require('cors');
 
@@ -26,6 +32,7 @@ let cardsDataBase = [
 
 let cardAndProof = [];
 
+let transaction_log = [];
 // 1. endpoint to send cardSetup.wasm and cardSetup_0000.zkey to the user
 app.get('/user/request/card-setup', (req, res) => {
     res.zip([
@@ -80,7 +87,7 @@ app.post('/create-transaction', async (req, res) => {
         return;
     }
     transaction_log.push({ transaction_hashed , amount });
-    // OnCreatingTransactionHashed(transaction_hashed,amount); 
+    OnCreatingTransactionHashed(transaction_hashed,amount); 
     res.status(200).json({ message: 'Transaction order created onchain', payload: transaction_hashed });
     return;
 });
@@ -97,8 +104,8 @@ app.get('/user/request/card-verification',async  (req, res) => {
 app.get('/shop/check-transaction/:transaction_hashed', async (req, res) => {
     const { transaction_hashed } = req.params;
     // Querry transaction_hashed onchain and check is valid & onchain
-    // const transactionInfo = await OnGetTransactionInfo(transaction_hashed) ; 
-    transactionInfo = {amount : 500 , status : 1}
+    const transactionInfo = await OnGetTransactionInfo(transaction_hashed) ; 
+    
     // interface on chain ITransactionStatus = {
     //     Unknown: 0,
     //     Pending: 1,
@@ -136,3 +143,49 @@ app.get('/shop/check-transaction/:transaction_hashed', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Bank server is running on port ${PORT}`);
 });
+
+
+function OnCreatingTransactionHashed(transaction_hashed, amount){
+    const provider = new ethers.JsonRpcProvider(process.env.JSON_RPC_PROVIDER);
+    const walletPrivateKey = process.env.BANK_PRIVATE_KEY;
+    if (!walletPrivateKey) {
+        throw new Error("WALLET_PRIVATE_KEY is not defined in the environment variables.");
+    }
+    const wallet = new ethers.Wallet(walletPrivateKey,provider);
+    const contract = new ethers.Contract("0x62DE9519e5205fdEd52d0A583Aa3785438EB992d", abi , wallet);
+
+    try {
+        contract.addTransactionHashedInfo(transaction_hashed, amount,{
+            gasLimit: 300000,
+            maxFeePerGas: ethers.parseUnits('50', 'gwei'),
+            maxPriorityFeePerGas: ethers.parseUnits('2', 'gwei')
+        });
+        return { status: true };
+    } catch (error) {
+        console.error("Error adding transaction:", error);
+        return { status: false, error: error.message };
+    }
+}
+
+
+async function OnGetTransactionInfo(transaction_hashed){
+    const provider = new ethers.JsonRpcProvider(process.env.JSON_RPC_PROVIDER);
+    const walletPrivateKey = process.env.BANK_PRIVATE_KEY;
+    if (!walletPrivateKey) {
+        throw new Error("WALLET_PRIVATE_KEY is not defined in the environment variables.");
+    }
+    const wallet = new ethers.Wallet(walletPrivateKey,provider);
+    const contract = new ethers.Contract("0x62DE9519e5205fdEd52d0A583Aa3785438EB992d", abi , wallet);
+
+    const TransactionInfo = await contract.getTransactionInfo(transaction_hashed,{
+        gasLimit: 300000,
+        maxFeePerGas: ethers.parseUnits('50', 'gwei'),
+        maxPriorityFeePerGas: ethers.parseUnits('2', 'gwei')
+    });
+    return {
+        amount: Number(TransactionInfo.amount),
+        status: Number(TransactionInfo.status)
+    }; 
+}
+
+
