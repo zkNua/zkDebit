@@ -1,4 +1,9 @@
-const { execSync } = require('child_process');
+const express = require('express');
+const snarkjs = require('snarkjs');
+const fs = require('fs');
+const execSync  = require('child_process');
+const circomlibjs = require("circomlibjs");
+const crypto = require('crypto');
 
 function runCommand(command) {
   try {
@@ -30,25 +35,3 @@ export function compileAndSetupCircuits() {
   // Run this script to generating verifier contract 
     runCommand("snarkjs zkey export solidityverifier cardVerification_0000.zkey CardVerifier.sol");
 }
-
-// Function to recompute X using stored `pi3`, `tx`, and `nonce`
-async function computeVerificationHash(pia, tx, nonce) {
-  // Prepare inputs for Poseidon hashing
-  const inputArray = [
-      pia,
-      tx,
-      nonce
-  ];
-  // Generate X using Poseidon hash function
-  const poseidon = await circomlibjs.buildPoseidon();
-  const generatedX = poseidon.F.toString(poseidon(inputArray));
-
-  return generatedX;
-}
-
-function main(){
-  compileAndSetupCircuits()
-  computeVerificationHash()
-}
-
-main()
