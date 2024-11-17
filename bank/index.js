@@ -258,21 +258,12 @@ contract.on("Transfer", async (from, to, value) => {
 });
 
 // Listen for Verify events
-contract.on("Transfer", async (from, to, value) => {
-    console.log(`Transfer detected: from ${from} to ${to}, value: ${value}`);
-
-    // Format the value to account for token decimals
-    const decimals = 18; // Defaulting to 18 decimals; update if your token uses a different value
-    const amount = parseFloat(ethers.formatUnits(value, decimals));
-
-    // Ignore very small transfers
-    if (amount < 0.0001) {
-        console.log(`Transfer too small to process: ${amount} tokens`);
-        return;
-    }
-
-    // Update the recipient's balance
-    updateBalance(to, amount);
+contract.on("Verify", async (
+    walletAddress, _transactionHashed, isvalid
+) => {
+    console.log("User : ",walletAddress )
+    console.log("Verify proof for transaction : ",_transactionHashed)
+    console.log(`And the proof is ${isvalid ? '': 'in'}valid`)
 });
 
 // API to get balance
