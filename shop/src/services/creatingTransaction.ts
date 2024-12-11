@@ -27,18 +27,16 @@ export default async function CreatingTransaction(
         })
     })
 
-    await fetch("https://zkdebit-host/create-transaction", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            transaction_hashed: transactionHashed,
-            amount: goods.amount,
-            check_pi3: goods.ppp
-        })
-    })
-
+    // await fetch("https://zkdebit-host/create-transaction", {
+    //     method: "POST",
+    //     headers: {
+    //         "Content-Type": "application/json"
+    //     },
+    //     body: JSON.stringify({
+    //         transaction_hashed: transactionHashed,
+    //         amount: goods.amount,
+    //         check_pi3: goods.ppp
+    //     })
+    // })
     console.log("Transaction created successfully!")
-    return true 
 }

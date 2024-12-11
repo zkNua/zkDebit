@@ -6,9 +6,8 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { pi3, goods } = body;
-    console.log("Received data:", pi3, goods);
-    CreatingTransaction(pi3, goods);
 
+    CreatingTransaction(pi3, goods);
     return NextResponse.json(
         {
             success: true,
