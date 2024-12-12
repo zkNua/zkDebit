@@ -30,11 +30,11 @@ const config: HardhatUserConfig = {
     },
     holesky: {
       url: process.env.RPC_HOLESKY! || "",
-      accounts: [process.env.VERIFIER_PRIVATE_KEY!]
+      accounts: [process.env.VERIFIER_PRIVATE_KEY_HOLESKY!]
     },
     sepolia: {
       url: process.env.RPC_SEPOLIA! || "",
-      accounts: [process.env.VERIFIER_PRIVATE_KEY!]
+      accounts: [process.env.VERIFIER_PRIVATE_KEY_SEPOLIA!]
     }
   },
   etherscan: {
