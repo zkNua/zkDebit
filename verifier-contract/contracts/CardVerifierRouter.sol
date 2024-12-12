@@ -78,11 +78,11 @@ contract CardVerifierRouter {
     return transactionHashedToDetails[_transactionHashed].status; 
   }
 
-  function selfTransacts() public view returns( string[] memory){
+  function getUserTransactions() public view returns( string[] memory){
     return walletToTransactionHashed[msg.sender]; 
   }
 
-  function selfTransacts(address walletAddress) public view returns(string[] memory ){
+  function getUserTransactions(address walletAddress) public view returns(string[] memory ){
     return walletToTransactionHashed[walletAddress]; 
   }
 

@@ -89,7 +89,6 @@ describe("CardVerifier",function (){
         // 3 approve tx
         expect(await cardVerifierRouter.checkTransactionValid(txHashed)).to.equal(3); 
 
-        const Transacts = await cardVerifierRouter.connect(user)["selfTransacts()"]();
-        console.log(Transacts)
+        const Transacts = await cardVerifierRouter.connect(user)["getUserTransactions()"]();
     })
 })
