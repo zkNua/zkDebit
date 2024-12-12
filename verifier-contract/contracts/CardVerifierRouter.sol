@@ -11,26 +11,24 @@ enum EStatus {
 }
 
 struct TransactionInfo {
-  uint amount; 
+  uint amount;
   EStatus status;
 }
-
-/* address _bitkubNext for bitkub chain only */
-
 contract CardVerifierRouter {
-  ICardVerifier public immutable verifier;    
-  address admin;
-  address admin2;
+  ICardVerifier public immutable verifier;   
+  address public admin1;
+  // Placeholder for development admin2
+  address public admin2;
 
   mapping (string => TransactionInfo) public transactionHashedToDetails;  
-  mapping (address => string[]) walletToTransactionHashed; 
-
-  event Verify(address indexed verifier, string hashed, bool proof);
-  event TransactionHashed(string hashed, uint amount);
+  mapping (address => string[]) walletToTransactionHashed;
+  
+  event VerifyLog(address indexed verifier, string txHashed, bool proof);
+  event EnrollTransactionHashed(string txHashed, uint amount);
 
   constructor(ICardVerifier _verifier) {
     verifier = _verifier;    
-    admin = msg.sender;
+    admin1 = msg.sender;
   }
 
   function verifyTransaction(
@@ -39,52 +37,39 @@ contract CardVerifierRouter {
     uint[2][2] calldata p_b,
     uint[2] calldata p_c,
     uint[2] calldata pub_output
-    ,address _bitkubNext
   ) public {
     require(
       transactionHashedToDetails[_transactionHashed].status != EStatus.Approved, 
-      "Transaction already proof"
+      "Transaction already verified."
     ); 
     require(
       transactionHashedToDetails[_transactionHashed].status != EStatus.Unknown,
-      "Invalid transaction nerver exist"
+      "Invalid transaction nerver exist."
     );
 
     bool proof = verifier.verifyProof(p_a, p_b, p_c, pub_output);
-    require(proof, "invalid proof");
+    require(proof, "Invalid proof.");
     if (proof) {
       transactionHashedToDetails[_transactionHashed].status = EStatus.Approved;
     }
     else {
       transactionHashedToDetails[_transactionHashed].status = EStatus.Rejected; 
     }
-
+    emit VerifyLog(msg.sender, _transactionHashed, proof);
     walletToTransactionHashed[msg.sender].push(_transactionHashed);
-
-    emit Verify(msg.sender, _transactionHashed, proof);
   }   
 
   function addTransactionHashedInfo(
     string memory _transactionHashed,
     uint _amount
-    ,address _bitkubNext
   ) external {
-    // require(msg.sender == admin || msg.sender == admin2, 'only admin');
+    require(msg.sender == admin1 || msg.sender == admin2, 'only admin');
     transactionHashedToDetails[_transactionHashed] = TransactionInfo({
       amount: _amount,
       status: EStatus.Pending
     });
 
-    emit TransactionHashed(_transactionHashed, _amount);
-  }
-
-  function getNounce() public view returns(uint _nounce){
-    _nounce = walletToTransactionHashed[msg.sender].length; 
-  }
-
-  function setAdmin(address _admin2, address _bitkubNext) public {
-    // require(msg.sender == admin, 'only admin');
-    admin2 = _admin2;
+    emit EnrollTransactionHashed(_transactionHashed, _amount);
   }
 
   function checkTransactionValid (
@@ -93,11 +78,17 @@ contract CardVerifierRouter {
     return transactionHashedToDetails[_transactionHashed].status; 
   }
 
-  function getTransactionHashed () public view returns( string[] memory){
+  function selfTransacts() public view returns( string[] memory){
     return walletToTransactionHashed[msg.sender]; 
   }
 
-  function getTransactionHashed (address walletAddress) public view returns(string[] memory ){
+  function selfTransacts(address walletAddress) public view returns(string[] memory ){
     return walletToTransactionHashed[walletAddress]; 
   }
+
+  function setAdmin(address _admin2) public {
+    require(msg.sender == admin1 , 'only admin');
+    admin2 = _admin2;
+  }
+
 }
