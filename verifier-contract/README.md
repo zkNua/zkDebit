@@ -1,18 +1,7 @@
-flow
-https://evm-testnet.flowscan.io/address
-CardVerifier ADDRESS: 0x0Bc5A3a39cc647c60bba3e29cB8ce81419BfAA02
-CardVerifierRouter ADDRESS: 0xa7dA3485c439647aAb232CaD0a5E1C395Eb0278C
+latest card verifier router sepolia
+CardVerifier ADDRESS: 0x95E52C0Ac4af4c8507C8C1c41614642368330b3d
+CardVerifierRouter ADDRESS: 0xD9f9Caad7bD2e6C200619360FbFCe97d2cC29C40
 
-bitkub
-https://testnet.bkcscan.com/address
-CardVerifier ADDRESS: 0xFebd4eDc1d914669A40BE5221852feCdBD066DF5
-CardVerifierRouter ADDRESS: 0x616E01E477D62FC7A54D909F28a9b9BB78915eEc
-
-scroll
-https://sepolia.scrollscan.com/address
-CardVerifier ADDRESS: 0x212b3dD6a4f196488FfdAD0eE8CcBdaFD5c956b5
-CardVerifierRouter ADDRESS: 0x0Bc5A3a39cc647c60bba3e29cB8ce81419BfAA02
-
-sepolia
-CardVerifier ADDRESS: 0xf8ca7028281fBad4E9E3EF636627bE788cDE1730
-CardVerifierRouter ADDRESS: 0x3832f87b02724D953e08906CaF3C73d84Ef08570
+latest card verifier router holesky
+CardVerifier ADDRESS: 0x977Db3ED5a7F95CCa2b911F067Ae63F70a4f0989
+CardVerifierRouter ADDRESS: 0x84C6118BAba1Cf8874E2cB19d8D7091B74510c2c
