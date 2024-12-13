@@ -23,7 +23,7 @@ contract CardVerifierRouter {
   mapping (string => TransactionInfo) public transactionHashedToDetails;  
   mapping (address => string[]) walletToTransactionHashed;
   
-  event VerifyLog(address indexed verifier, string txHashed, bool proof);
+  event VerifyLog(address indexed prover, string txHashed, bool proof);
   event EnrollTransactionHashed(string txHashed, uint amount);
 
   constructor(ICardVerifier _verifier) {
