@@ -213,17 +213,15 @@ async function OnCreatingTransactionHashed(transaction_hashed, amount) {
 async function OnGetTransactionInfo(transaction_hashed) {
     const provider = new ethers.JsonRpcProvider(process.env.JSON_RPC_PROVIDER);
     const walletPrivateKey = process.env.BANK_PRIVATE_KEY;
+    const card_verifier_contract_address = process.env.CARD_VERIFIER_CONTRACT_ADDRESS
+
     if (!walletPrivateKey) {
         throw new Error("WALLET_PRIVATE_KEY is not defined in the environment variables.");
     }
     const wallet = new ethers.Wallet(walletPrivateKey, provider);
-    const contract = new ethers.Contract("0x4736D41b89Fd4F4a5E54Cf1d1Ea501197BD29145", abi, wallet);
+    const contract = new ethers.Contract(card_verifier_contract_address, abi, wallet);
 
-    const TransactionInfo = await contract.getTransactionInfo(transaction_hashed, {
-        gasLimit: 300000,
-        maxFeePerGas: ethers.parseUnits('50', 'gwei'),
-        maxPriorityFeePerGas: ethers.parseUnits('2', 'gwei')
-    });
+    const TransactionInfo = await contract.getTransactionInfo(transaction_hashed);
     return {
         amount: Number(TransactionInfo.amount),
         status: Number(TransactionInfo.status)
