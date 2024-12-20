@@ -1,11 +1,10 @@
-
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest, res : NextResponse) {
   try {
     const body = await req.json();
     const { pi3, _amount , transaction_hashed } = body;
-    console.log(pi3, _amount , transaction_hashed)
+    // console.log(pi3, _amount , transaction_hashed)
     // Host send to bank 
     await fetch("http://localhost:4000/create-transaction", {
       method: "POST",

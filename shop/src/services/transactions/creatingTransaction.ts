@@ -1,6 +1,5 @@
 'use server'
-import { error } from "node:console";
-import { iGoodPayload } from "../interface/transaction";
+import { iGoodPayload } from "../../interface/transaction";
 import crypto from 'crypto';
 
 // Creating transaction hashed include with Pi3 & amount to both bank host & zkdebit host
@@ -22,6 +21,8 @@ export default async function CreatingTransaction(
         .update(`${stringGoods} ${pi3}`)
         .digest("hex")
 
+        console.log(transactionHashed)
+        
         const response = await fetch(`https://localhost:3000/api/transaction/create`,{
             method: "POST",
             headers: {
@@ -29,7 +30,7 @@ export default async function CreatingTransaction(
             },
             body: JSON.stringify({
                 transaction_hashed: transactionHashed ,
-                amount: totalPrice,
+                _amount: totalPrice,
                 pi3: pi3
             })
         })
@@ -38,5 +39,5 @@ export default async function CreatingTransaction(
     }catch (err){
         console.log(err)
     }
-    console.log("Transaction created successfully!")
+    // console.log("Transaction created successfully!")
 }
