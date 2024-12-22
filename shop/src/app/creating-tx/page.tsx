@@ -11,16 +11,16 @@ export default function page({}: Props) {
             "pi3" : "01234567890",
             "goods" : [
                 {
-                    "name" : "Item1",
-                    "details" : "Item 1 details", 
-                    "amount" : 5,
-                    "ppp" : 100
+                    "name" : "Shirt",
+                    "details" : "White plain shirt", 
+                    "amount" : 1,
+                    "ppp" : 20
                 },
                 {
-                    "name" : "Item2",
-                    "details" : "Item 2 details", 
-                    "amount" : 10,
-                    "ppp" : 200
+                    "name" : "Book",
+                    "details" : "Frogs book", 
+                    "amount" : 1,
+                    "ppp" : 80
                 }
             ]
         }
