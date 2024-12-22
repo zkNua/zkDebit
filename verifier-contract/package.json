@@ -1,13 +1,14 @@
 {
   "name": "hardhat-project",
-  "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
-    "hardhat": "^2.22.15",
+  "dependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "@openzeppelin/contracts": "^5.1.0",
     "dotenv": "^16.4.5",
+    "hardhat": "2.22.15"
+  },
+  "devDependencies": {
+    "chai": "^4.3.10",
+    "dotenv": "^16.4.7",
     "erc721a": "^4.3.0",
-    "ethers": "^6.13.4",
-    "viem": "^2.21.45"
+    "ethers": "^6.13.4"
   }
 }
