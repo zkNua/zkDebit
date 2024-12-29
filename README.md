@@ -37,9 +37,6 @@ cd zkdebit
 ```
 
 ### 2. Starting Bank server
-
-adding env following the .env.example
-
 ```bash 
 cd Bank 
 npm i --legacy-depedency 
@@ -61,7 +58,6 @@ npm run dev
 ```
 
 ### 4. verify proof in from zkdebit temporary in verifier-contract folder
-adding .env following the .enc.example then run script.
 ```
 cd scripts
 node verifyProof.ts
