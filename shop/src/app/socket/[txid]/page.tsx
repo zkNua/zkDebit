@@ -1,9 +1,10 @@
-'use client';
+'use client'
 
 import * as React from 'react'
 
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 
 interface TransactionEvent {
   status: number; 
@@ -13,7 +14,7 @@ interface TransactionEvent {
 export default function RealTimeTransactionStatus({ 
   params 
 }: { 
-  params: { txid: string } 
+  params: { txid: string }
 }) {
   const [status, setStatus] = useState<number | null>(null);
   const [description, setSDescription] = useState<string | null>(null);
@@ -21,8 +22,8 @@ export default function RealTimeTransactionStatus({
   const [isListening, setIsListening] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
-  const { txid } = React.use(params)
+  const { txid } = useParams()
+  // const { txid } = React.use(params)
 
 
   useEffect(() => {
