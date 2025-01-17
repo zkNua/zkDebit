@@ -149,7 +149,7 @@ app.get('/shop/check-transaction/:transaction_hashed', async (req, res) => {
     const { transaction_hashed } = req.params;
     // Querry transaction_hashed onchain and check is valid & onchain
     const transactionInfo = await OnGetTransactionInfo(transaction_hashed);
-
+    console.log("response from bank ",transactionInfo)
     // interface on chain ITransactionStatus = {
     //     Unknown: 0,
     //     Pending: 1,
@@ -159,26 +159,28 @@ app.get('/shop/check-transaction/:transaction_hashed', async (req, res) => {
 
     switch (transactionInfo.status) {
         case ITransactionStatus.Unknown:
-            res.status(400).json({ message: 'Transaction order does not exist', payload: "" });
             console.log("Transaction status is Unknown.");
+            res.status(200).json({ message: 'Transaction order does not exist', payload: "" });
             return;
         case ITransactionStatus.Pending:
-            res.status(400).json({ message: 'Transaction order waiting proof from user', payload: "" });
             console.log("Transaction is Pending. Please wait for approval.");
+            res.status(200).json({ message: 'Transaction order waiting proof from user', payload: "" });
             return;
         case ITransactionStatus.Rejected:
-            res.status(400).json({ message: 'Transaction failed. Invalid Proof from user', payload: "" });
-            console.log("Transaction has been Rejected. Please check details.");
+             console.log("Transaction has been Rejected. Please check details.");
+    
+            res.status(200).json({ message: 'Transaction failed. Invalid Proof from user', payload: "" });
             return;
         case ITransactionStatus.Approved:
             if (cardsDataBase[1].balance < transactionInfo.amount) {
-                res.status(400).json({ message: 'Tranaction succeed. But insufficient balance', payload: "" });
+                console.log("Insufficient balance!!!");
+                res.status(200).json({ message: 'Tranaction succeed. But insufficient balance', payload: "" });
                 return;
             }
             cardsDataBase[0].balance -= transactionInfo.amount
-            cardsDataBase[1].balance += transactionInfo.amount
-            res.status(200).json({ message: 'Tranaction succeed. Proof from user is valid', payload: "" });
+            cardsDataBase[1].balance += transactionInfo.amount           
             console.log("Transaction has been Approved!");
+            res.status(200).json({ message: 'Tranaction succeed. Proof from user is valid', payload: "" });
             return;
     }
 });
@@ -212,16 +214,12 @@ async function OnCreatingTransactionHashed(transaction_hashed, amount) {
 
 async function OnGetTransactionInfo(transaction_hashed) {
     const provider = new ethers.JsonRpcProvider(process.env.JSON_RPC_PROVIDER);
-    const walletPrivateKey = process.env.BANK_PRIVATE_KEY;
     const card_verifier_contract_address = process.env.CARD_VERIFIER_CONTRACT_ADDRESS
 
-    if (!walletPrivateKey) {
-        throw new Error("WALLET_PRIVATE_KEY is not defined in the environment variables.");
-    }
-    const wallet = new ethers.Wallet(walletPrivateKey, provider);
-    const contract = new ethers.Contract(card_verifier_contract_address, abi, wallet);
+    const contract = new ethers.Contract(card_verifier_contract_address, abi, provider);
 
-    const TransactionInfo = await contract.getTransactionInfo(transaction_hashed);
+    const TransactionInfo = await contract.transactionHashedToDetails("619eed0b2b24240aabe63581844bbd33db95f46fd19bcf990fc358923113782e");
+    
     return {
         amount: Number(TransactionInfo.amount),
         status: Number(TransactionInfo.status)
