@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import axios from 'axios';
 
 import { ethers } from 'ethers';
 import { CardVerifierRouterAbi } from 'assets/contractAbi';
-import { TransactionStatus } from '../../../../../interface/transaction';
 
 import dotenv from 'dotenv';
 
@@ -17,53 +17,46 @@ export async function GET(
 ) {
   try {
     const txid = (await params).txid;
-
-    if (!txid) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Missing txid in URL path' 
-      }, { status: 400 });
-    }
-
-    const provider = new ethers.JsonRpcProvider(PROVIDER_URL);
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, CardVerifierRouterAbi, provider);
-
-    const response = await contract.checkTransactionValid(txid);
-    const status = ethers.toNumber(response);
-    const estatus = TransactionStatus[status];
-    console.log(estatus)
-    switch (status) { 
-      case 0 : 
+    const response = axios.get('http://localhost:4000/shop/check-transaction',{
+      params : {
+        transaction_hashed : txid
+      }
+    });
+    const payload = (await response).data;
+    switch (payload.status) { 
+      case 0 :
         return NextResponse.json({ 
           success: false, 
-          status : estatus, 
+          order_status : payload.status, 
           description : "Unknown transaction",
           error: 'transaction not found' 
         }, { status: 200 });
-      case 1 : 
+      case 1 :
         return NextResponse.json({ 
-          success: false, 
+          success: false,
+          order_status : payload.status, 
           description : "Pending transaction",
           error: 'transaction not found' 
         }, { status: 200 });
-      case 2: 
+      case 2:
         return NextResponse.json({ 
           success: false, 
+          order_status : payload.status, 
           description : "Transaction rejected",
           error: 'transaction has been reject' 
         }, { status: 200 });
-        case 3: 
+        case 3:
         return NextResponse.json({ 
-          success: true, 
+          success: true,
+          order_status : payload.status, 
           description : "Approved transaction",
           error: 'transaction approved' 
         }, { status: 200 });
       }
   } catch (error) {
-
     return NextResponse.json({ 
       success: false, 
       error: 'Internal Server Error' 
-    }, { status: 500 });
+    },{ status: 500 });
   }
 }
