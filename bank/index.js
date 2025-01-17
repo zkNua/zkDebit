@@ -145,44 +145,10 @@ app.get('/user/request/card-verification', async (req, res) => {
 });
 
 // 5. Endpoint to check the transaction status
-app.get('/shop/check-transaction/:transaction_hashed', async (req, res) => {
-    const { transaction_hashed } = req.params;
-    // Querry transaction_hashed onchain and check is valid & onchain
+app.get('/shop/check-transaction', async (req, res) => {
+    const { transaction_hashed } = req.query;
     const transactionInfo = await OnGetTransactionInfo(transaction_hashed);
-    console.log("response from bank ",transactionInfo)
-    // interface on chain ITransactionStatus = {
-    //     Unknown: 0,
-    //     Pending: 1,
-    //     Rejected: 2,
-    //     Approved: 3
-    // };
-
-    switch (transactionInfo.status) {
-        case ITransactionStatus.Unknown:
-            console.log("Transaction status is Unknown.");
-            res.status(200).json({ message: 'Transaction order does not exist', payload: "" });
-            return;
-        case ITransactionStatus.Pending:
-            console.log("Transaction is Pending. Please wait for approval.");
-            res.status(200).json({ message: 'Transaction order waiting proof from user', payload: "" });
-            return;
-        case ITransactionStatus.Rejected:
-             console.log("Transaction has been Rejected. Please check details.");
-    
-            res.status(200).json({ message: 'Transaction failed. Invalid Proof from user', payload: "" });
-            return;
-        case ITransactionStatus.Approved:
-            if (cardsDataBase[1].balance < transactionInfo.amount) {
-                console.log("Insufficient balance!!!");
-                res.status(200).json({ message: 'Tranaction succeed. But insufficient balance', payload: "" });
-                return;
-            }
-            cardsDataBase[0].balance -= transactionInfo.amount
-            cardsDataBase[1].balance += transactionInfo.amount           
-            console.log("Transaction has been Approved!");
-            res.status(200).json({ message: 'Tranaction succeed. Proof from user is valid', payload: "" });
-            return;
-    }
+    res.status(200).json({ status: transactionInfo.status });
 });
 
 // Start the server
@@ -198,7 +164,6 @@ async function OnCreatingTransactionHashed(transaction_hashed, amount) {
         if (!wallet_private_key || !card_verifier_contract_address) {
             throw new Error("WALLET_PRIVATE_KEY is not defined in the environment variables.");
         }
-
         const wallet = new ethers.Wallet(wallet_private_key, provider);
         const contract = new ethers.Contract(card_verifier_contract_address, abi, wallet);
 
@@ -215,115 +180,11 @@ async function OnCreatingTransactionHashed(transaction_hashed, amount) {
 async function OnGetTransactionInfo(transaction_hashed) {
     const provider = new ethers.JsonRpcProvider(process.env.JSON_RPC_PROVIDER);
     const card_verifier_contract_address = process.env.CARD_VERIFIER_CONTRACT_ADDRESS
-
     const contract = new ethers.Contract(card_verifier_contract_address, abi, provider);
 
-    const TransactionInfo = await contract.transactionHashedToDetails("619eed0b2b24240aabe63581844bbd33db95f46fd19bcf990fc358923113782e");
-    
+    const TransactionInfo = await contract.transactionHashedToDetails(transaction_hashed);
     return {
         amount: Number(TransactionInfo.amount),
         status: Number(TransactionInfo.status)
     };
 }
-
-// Safe wallet
-// const provider = new ethers.JsonRpcProvider(process.env.PROVIDER_URL);
-// const erc20ContractAddress = process.env.ERC20_CONTRACT;
-// const erc20Abi = [
-//     "event Transfer(address indexed from, address indexed to, uint256 value)",
-//     "function balanceOf(address owner) view returns (uint256)",
-// ];
-// const contract = new ethers.Contract(erc20ContractAddress, erc20Abi, provider);
-
-// // Utility function to find or create a wallet in the cache
-// const findOrCreateWallet = (walletAddress) => {
-//     let card = cardsDataBase.find(
-//         (card) => card.walletAddress.toLowerCase() === walletAddress.toLowerCase()
-//     );
-//     if (!card) {
-//         card = {
-//             walletAddress: walletAddress.toLowerCase(),
-//             card_number: Math.random().toString().slice(2, 18), // Generate random card number
-//             balance: 0,
-//             nonce: 0,
-//         };
-//         cardsDataBase.push(card);
-//     }
-//     return card;
-// };
-
-// // Utility function to update off-chain balance
-// const updateBalance = (walletAddress, value) => {
-//     // console.log("Updating balance for wallet: ", walletAddress);
-//     // const card = findOrCreateWallet(walletAddress);
-//     // console.log("cardsDataBase", card);
-//     cardsDataBase[0].balance += value;
-//     console.log(
-//         `Updated balance for wallet: ${walletAddress}, new balance: ${cardsDataBase[0].balance}`
-//     );
-// };
-
-// // Listen for Transfer events
-// contract.on("Transfer", async (from, to, value) => {
-//     console.log(`Transfer detected: from ${from} to ${to}, value: ${value}`);
-
-//     // Format the value to account for token decimals
-//     const decimals = 18; // Defaulting to 18 decimals; update if your token uses a different value
-//     const amount = parseFloat(ethers.formatUnits(value, decimals));
-
-//     // Ignore very small transfers
-//     if (amount < 0.0001) {
-//         console.log(`Transfer too small to process: ${amount} tokens`);
-//         return;
-//     }
-
-//     // Update the recipient's balance
-//     updateBalance(to, amount);
-// });
-
-// // Listen for Verify events
-// contract.on("Verify", async (
-//     walletAddress, _transactionHashed, isvalid
-// ) => {
-//     console.log("User : ",walletAddress )
-//     console.log("Verify proof for transaction : ",_transactionHashed)
-//     console.log(`And the proof is ${isvalid ? '': 'in'}valid`)
-// });
-
-// // API to get balance
-// app.get("/balance/:walletAddress", (req, res) => {
-//     // const walletAddress = req.params.walletAddress.toLowerCase();
-//     // const card = cardsDataBase.find(
-//     // (card) => card.walletAddress.toLowerCase() === walletAddress
-//     // );
-//     // if (!card) {
-//     //     return res
-//     //         .status(404)
-//     //         .json({ error: `No balance found for wallet: ${walletAddress}` });
-//     // }
-//     res.json({
-//         // walletAddress: card.walletAddress,
-//         card_number: cardsDataBase[0].card_number,
-//         balance: cardsDataBase[0].balance,
-//     });
-// });
-
-// app.get("/balance/:card_number", (req, res) => {
-//     // const walletAddress = req.params.walletAddress.toLowerCase();
-//     // const card = cardsDataBase.find(
-//     // (card) => card.walletAddress.toLowerCase() === walletAddress
-//     // );
-//     // if (!card) {
-//     //     return res
-//     //         .status(404)
-//     //         .json({ error: `No balance found for wallet: ${walletAddress}` });
-//     // }
-//     res.json({
-//         // walletAddress: card.walletAddress,
-//         card_number: cardsDataBase[0].card_number,
-//         balance: cardsDataBase[0].balance,
-//     })
-// })
-
-
-
