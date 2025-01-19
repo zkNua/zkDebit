@@ -148,6 +148,7 @@ app.get('/user/request/card-verification', async (req, res) => {
 app.get('/shop/check-transaction', async (req, res) => {
     const { transaction_hashed } = req.query;
     const transactionInfo = await OnGetTransactionInfo(transaction_hashed);
+    // Perform puchasing laters
     res.status(200).json({ status: transactionInfo.status });
 });
 

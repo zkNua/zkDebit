@@ -11,3 +11,10 @@ export enum TransactionStatus{
     Rejected,   // 2 
     Approved    // 3   
 }
+
+export interface ITransactionStatusResponse {
+    success: boolean;
+    order_status: number;
+    description: string;
+    error: string;
+}

@@ -1,16 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
-import { ethers } from 'ethers';
-import { CardVerifierRouterAbi } from 'assets/contractAbi';
-
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-const PROVIDER_URL = process.env.WEBSOCKET_SEPOLIA || '';
-const CONTRACT_ADDRESS = process.env.CARD_VERIFIER_ROUTER_ADDRESS || '';
-
 export async function GET(
   request: NextRequest,
   { params }: { params: { txid: string } }

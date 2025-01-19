@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'next/navigation';
 
+import { ITransactionStatusResponse } from '../../../interface/transaction';
+
 export default function RealTimeTransactionStatus() {
   const { txid } = useParams();
 
@@ -17,25 +19,13 @@ export default function RealTimeTransactionStatus() {
     setError(null); // Clear any previous error
     try {
       const response = await axios.get(`/api/transaction/status/${txid}`);
-      setStatus(response.data.success);
-      setDescription(response.data.description);
+      const payload : ITransactionStatusResponse = response.data
+      setStatus(payload.order_status);
+      setDescription(payload.description);
     } catch (err) {
       setError('Failed to fetch transaction status.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const statusLabel = (status: number | null) => {
-    switch (status) {
-      case 1:
-        return 'Pending';
-      case 2:
-        return 'Rejected';
-      case 3:
-        return 'Approved';
-      default:
-        return 'Unknown';
     }
   };
 
@@ -45,7 +35,6 @@ export default function RealTimeTransactionStatus() {
       <h3>Tracking Transaction: <strong>{txid}</strong></h3>
 
       <div style={{ marginBottom: '20px' }}>
-        <p>Status: <strong>{status !== null ? statusLabel(status) : 'Not fetched yet'}</strong></p>
         <p>Description: {description || 'No updates yet...'}</p>
         <div style={{ marginTop: '10px' }}>
           <button onClick={fetchStatus} disabled={loading}>
