@@ -14,7 +14,7 @@ export async function CardRegister(
 ){
     const hashed_salt = hashStringToBigInt(salt);
     const hashed_cvc = hashStringToBigInt(cvc);
-    
+    console.log(card_number,cvc,salt,hashed_salt,hashed_cvc)
     const { proof, publicSignals } = await snarkjs.groth16.fullProve(
         {
             "cardNumber": card_number,
@@ -22,8 +22,9 @@ export async function CardRegister(
             "cvc": hashed_cvc
         },
         "/assets/cardSetup/cardSetup.wasm",
-        "/assets/cardSetup/cardSetup_0000.zkey"
+        "/assets/cardSetup/cardSetup_0001.zkey"
     );
+    console.log("public output : ",publicSignals);
     return {
         card_number: card_number,
         public_output: JSON.stringify(publicSignals)
@@ -46,7 +47,7 @@ export async function CardVerification(
             "nonce": hashed_nounce,
         },
         "cardVerification_js/cardVerification.wasm",
-        "cardVerification_0000.zkey"
+        "cardVerification_0001.zkey"
     );
 
     return {
