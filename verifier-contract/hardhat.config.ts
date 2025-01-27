@@ -1,6 +1,8 @@
 import { HardhatUserConfig } from "hardhat/config";
+
 import "@nomicfoundation/hardhat-toolbox";
-import "hardhat-gas-reporter"
+import "@nomicfoundation/hardhat-verify";
+
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -20,31 +22,19 @@ const config: HardhatUserConfig = {
     },
   },
   gasReporter: {
-    enabled: false,
+    enabled: true,
   },
   networks: {
     hardhat: {
       allowBlocksWithSameTimestamp: true,
     },
     holesky: {
-      url: process.env.HOLESKY! || "",
-      accounts: [process.env.PRIVATE_KEY!]
+      url: process.env.RPC_HOLESKY! || "",
+      accounts: [process.env.VERIFIER_PRIVATE_KEY_HOLESKY!]
     },
     sepolia: {
-      url: process.env.SEPOLIA! || "",
-      accounts: [process.env.PRIVATE_KEY!]
-    },
-    bitkub: {
-      url: 'https://rpc-testnet.bitkubchain.io',
-      accounts: [process.env.PRIVATE_KEY!]
-    },
-    flow: {
-      url: 'https://testnet.evm.nodes.onflow.org',
-      accounts: [process.env.PRIVATE_KEY!],
-    },
-    scroll: {
-      url: 'https://scroll-sepolia-rpc.publicnode.com',
-      accounts: [process.env.PRIVATE_KEY!],
+      url: process.env.RPC_SEPOLIA! || "",
+      accounts: [process.env.VERIFIER_PRIVATE_KEY_SEPOLIA!]
     }
   },
   etherscan: {

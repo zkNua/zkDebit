@@ -12,7 +12,14 @@ const cors = require('cors');
 
 const app = express();
 
-app.use(cors());
+app.use(
+    cors({
+      origin: "http://localhost:3000",
+      methods: ["GET", "POST", "PUT", "DELETE"],
+      credentials: true,
+    })
+);
+
 app.use(express.json());
 const PORT = 4000;
 
@@ -40,7 +47,12 @@ let cardsDataBase = [
     }
 ];
 
-let cardAndProof = [];
+let cardAndProof = [
+    {
+        card_number: "4242424242424242424242",
+        pi3: "01234567890"
+    }
+];
 
 let transaction_log = [];
 // 1. endpoint to send cardSetup.wasm and cardSetup_0000.zkey to the user
@@ -50,6 +62,10 @@ app.get('/user/request/card-setup', (req, res) => {
         { path: './cardSetup_js/cardSetup.wasm', name: 'cardSetup.wasm' }
     ]);
 });
+
+app.get("/transaction/log",(req,res)=>{
+    res.json(transaction_log)
+})
 
 // 2. Endpoint to user send proof and verify the setup proof from PrivacyVisa and keep in bank backend 
 app.post('/store-setup', async (req, res) => {
@@ -81,25 +97,43 @@ app.post('/store-setup', async (req, res) => {
 
 // 3. Endpoint to create a transaction order from shop initialize onchain
 app.post('/create-transaction', async (req, res) => {
-    const { transaction_hashed, amount, check_pi3 } = req.body;
+    const { pi3, amount, transaction_hashed } = req.body;
     // check that the user's card number is stored in cards offchain
+    
     const exists = transaction_log.find(
         (transaction) => transaction.transaction_hashed === transaction_hashed
     );
     if (exists) {
-        res.status(400).json({ message: 'Transaction hashed is already declare tell shop re generate it', payload: "" });
+        res.status(400).json({
+            message: 'Transaction hashed is already declare tell shop re generate it',
+            payload: ""
+        });
         return;
     }
-    const certain_card = cardAndProof.find(card => card.pi3 === check_pi3);
+    const certain_card = cardAndProof.find(card => card.pi3 === pi3);
     if (!certain_card) {
         console.log("Card not found");
         res.status(400).json({ message: 'Card not found', payload: "" });
         return;
     }
-    transaction_log.push({ transaction_hashed, amount });
-    OnCreatingTransactionHashed(transaction_hashed, amount);
-    res.status(200).json({ message: 'Transaction order created onchain', payload: transaction_hashed });
-    return;
+
+    const response = await OnCreatingTransactionHashed(transaction_hashed, amount);
+    if (response.status) {
+        transaction_log.push({
+            transaction_hashed,
+            amount
+        });
+        console.log(transaction_log)
+        return res.status(200).json({
+            message: 'Transaction order created onchain',
+            payload: transaction_hashed
+        });
+    }
+    console.log("Invalid transactionorder!");
+    return res.status(200).json({
+        message: 'Invalid transaction order',
+        payload: transaction_hashed
+    })
 });
 
 // 4. Endpoint to send cardVerification.wasm and cardVerification_0000.zkey to the user for generating verify proof 
@@ -111,42 +145,11 @@ app.get('/user/request/card-verification', async (req, res) => {
 });
 
 // 5. Endpoint to check the transaction status
-app.get('/shop/check-transaction/:transaction_hashed', async (req, res) => {
-    const { transaction_hashed } = req.params;
-    // Querry transaction_hashed onchain and check is valid & onchain
+app.get('/shop/check-transaction', async (req, res) => {
+    const { transaction_hashed } = req.query;
     const transactionInfo = await OnGetTransactionInfo(transaction_hashed);
-
-    // interface on chain ITransactionStatus = {
-    //     Unknown: 0,
-    //     Pending: 1,
-    //     Rejected: 2,
-    //     Approved: 3
-    // };
-
-    switch (transactionInfo.status) {
-        case ITransactionStatus.Unknown:
-            res.status(400).json({ message: 'Transaction order does not exist', payload: "" });
-            console.log("Transaction status is Unknown.");
-            return;
-        case ITransactionStatus.Pending:
-            res.status(400).json({ message: 'Transaction order waiting proof from user', payload: "" });
-            console.log("Transaction is Pending. Please wait for approval.");
-            return;
-        case ITransactionStatus.Rejected:
-            res.status(400).json({ message: 'Transaction failed. Invalid Proof from user', payload: "" });
-            console.log("Transaction has been Rejected. Please check details.");
-            return;
-        case ITransactionStatus.Approved:
-            if (cardsDataBase[1].balance < transactionInfo.amount) {
-                res.status(400).json({ message: 'Tranaction succeed. But insufficient balance', payload: "" });
-                return;
-            }
-            cardsDataBase[0].balance -= transactionInfo.amount
-            cardsDataBase[1].balance += transactionInfo.amount
-            res.status(200).json({ message: 'Tranaction succeed. Proof from user is valid', payload: "" });
-            console.log("Transaction has been Approved!");
-            return;
-    }
+    // Perform puchasing laters
+    res.status(200).json({ status: transactionInfo.status });
 });
 
 // Start the server
@@ -154,22 +157,20 @@ app.listen(PORT, () => {
     console.log(`Bank server is running on port ${PORT}`);
 });
 
-
-function OnCreatingTransactionHashed(transaction_hashed, amount) {
-    const provider = new ethers.JsonRpcProvider(process.env.JSON_RPC_PROVIDER);
-    const walletPrivateKey = process.env.BANK_PRIVATE_KEY;
-    if (!walletPrivateKey) {
-        throw new Error("WALLET_PRIVATE_KEY is not defined in the environment variables.");
-    }
-    const wallet = new ethers.Wallet(walletPrivateKey, provider);
-    const contract = new ethers.Contract("0x4736D41b89Fd4F4a5E54Cf1d1Ea501197BD29145", abi, wallet);
-
+async function OnCreatingTransactionHashed(transaction_hashed, amount) {
     try {
-        contract.addTransactionHashedInfo(transaction_hashed, amount, {
-            gasLimit: 300000,
-            maxFeePerGas: ethers.parseUnits('50', 'gwei'),
-            maxPriorityFeePerGas: ethers.parseUnits('2', 'gwei')
-        });
+        const provider = new ethers.JsonRpcProvider(process.env.JSON_RPC_PROVIDER);
+        const wallet_private_key = process.env.BANK_PRIVATE_KEY;
+        const card_verifier_contract_address = process.env.CARD_VERIFIER_CONTRACT_ADDRESS
+        if (!wallet_private_key || !card_verifier_contract_address) {
+            throw new Error("WALLET_PRIVATE_KEY is not defined in the environment variables.");
+        }
+        const wallet = new ethers.Wallet(wallet_private_key, provider);
+        const contract = new ethers.Contract(card_verifier_contract_address, abi, wallet);
+
+        const response_tx = await contract.addTransactionHashedInfo(transaction_hashed, amount);
+        await response_tx.wait(2);
+        console.log("Transaction confirmed on-chain");
         return { status: true };
     } catch (error) {
         console.error("Error adding transaction:", error);
@@ -177,129 +178,14 @@ function OnCreatingTransactionHashed(transaction_hashed, amount) {
     }
 }
 
-
 async function OnGetTransactionInfo(transaction_hashed) {
     const provider = new ethers.JsonRpcProvider(process.env.JSON_RPC_PROVIDER);
-    const walletPrivateKey = process.env.BANK_PRIVATE_KEY;
-    if (!walletPrivateKey) {
-        throw new Error("WALLET_PRIVATE_KEY is not defined in the environment variables.");
-    }
-    const wallet = new ethers.Wallet(walletPrivateKey, provider);
-    const contract = new ethers.Contract("0x4736D41b89Fd4F4a5E54Cf1d1Ea501197BD29145", abi, wallet);
+    const card_verifier_contract_address = process.env.CARD_VERIFIER_CONTRACT_ADDRESS
+    const contract = new ethers.Contract(card_verifier_contract_address, abi, provider);
 
-    const TransactionInfo = await contract.getTransactionInfo(transaction_hashed, {
-        gasLimit: 300000,
-        maxFeePerGas: ethers.parseUnits('50', 'gwei'),
-        maxPriorityFeePerGas: ethers.parseUnits('2', 'gwei')
-    });
+    const TransactionInfo = await contract.transactionHashedToDetails(transaction_hashed);
     return {
         amount: Number(TransactionInfo.amount),
         status: Number(TransactionInfo.status)
     };
 }
-
-
-
-// Safe wallet
-
-
-const provider = new ethers.JsonRpcProvider(process.env.PROVIDER_URL);
-const erc20ContractAddress = process.env.ERC20_CONTRACT;
-const erc20Abi = [
-    "event Transfer(address indexed from, address indexed to, uint256 value)",
-    "function balanceOf(address owner) view returns (uint256)",
-];
-const contract = new ethers.Contract(erc20ContractAddress, erc20Abi, provider);
-
-// Utility function to find or create a wallet in the cache
-const findOrCreateWallet = (walletAddress) => {
-    let card = cardsDataBase.find(
-        (card) => card.walletAddress.toLowerCase() === walletAddress.toLowerCase()
-    );
-    if (!card) {
-        card = {
-            walletAddress: walletAddress.toLowerCase(),
-            card_number: Math.random().toString().slice(2, 18), // Generate random card number
-            balance: 0,
-            nonce: 0,
-        };
-        cardsDataBase.push(card);
-    }
-    return card;
-};
-
-// Utility function to update off-chain balance
-const updateBalance = (walletAddress, value) => {
-    // console.log("Updating balance for wallet: ", walletAddress);
-    // const card = findOrCreateWallet(walletAddress);
-    // console.log("cardsDataBase", card);
-    cardsDataBase[0].balance += value;
-    console.log(
-        `Updated balance for wallet: ${walletAddress}, new balance: ${cardsDataBase[0].balance}`
-    );
-};
-
-// Listen for Transfer events
-contract.on("Transfer", async (from, to, value) => {
-    console.log(`Transfer detected: from ${from} to ${to}, value: ${value}`);
-
-    // Format the value to account for token decimals
-    const decimals = 18; // Defaulting to 18 decimals; update if your token uses a different value
-    const amount = parseFloat(ethers.formatUnits(value, decimals));
-
-    // Ignore very small transfers
-    if (amount < 0.0001) {
-        console.log(`Transfer too small to process: ${amount} tokens`);
-        return;
-    }
-
-    // Update the recipient's balance
-    updateBalance(to, amount);
-});
-
-// Listen for Verify events
-contract.on("Verify", async (
-    walletAddress, _transactionHashed, isvalid
-) => {
-    console.log("User : ",walletAddress )
-    console.log("Verify proof for transaction : ",_transactionHashed)
-    console.log(`And the proof is ${isvalid ? '': 'in'}valid`)
-});
-
-// API to get balance
-app.get("/balance/:walletAddress", (req, res) => {
-    // const walletAddress = req.params.walletAddress.toLowerCase();
-    // const card = cardsDataBase.find(
-    // (card) => card.walletAddress.toLowerCase() === walletAddress
-    // );
-    // if (!card) {
-    //     return res
-    //         .status(404)
-    //         .json({ error: `No balance found for wallet: ${walletAddress}` });
-    // }
-    res.json({
-        // walletAddress: card.walletAddress,
-        card_number: cardsDataBase[0].card_number,
-        balance: cardsDataBase[0].balance,
-    });
-});
-
-app.get("/balance/:card_number", (req, res) => {
-    // const walletAddress = req.params.walletAddress.toLowerCase();
-    // const card = cardsDataBase.find(
-    // (card) => card.walletAddress.toLowerCase() === walletAddress
-    // );
-    // if (!card) {
-    //     return res
-    //         .status(404)
-    //         .json({ error: `No balance found for wallet: ${walletAddress}` });
-    // }
-    res.json({
-        // walletAddress: card.walletAddress,
-        card_number: cardsDataBase[0].card_number,
-        balance: cardsDataBase[0].balance,
-    })
-})
-
-
-
