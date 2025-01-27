@@ -30,7 +30,11 @@ export default function CardRegisterContainer(){
             cardNumber: data.cardNumber.replace(/\s/g, ""), // Remove spaces from card number
         };
         console.log("Formatted Data:", formattedData);
-        const response = await CardRegister(formattedData.cardNumber,formattedData.cvc,formattedData.salt)
+        const response = await CardRegister(
+            formattedData.cardNumber,
+            formattedData.cvc,
+            formattedData.salt
+        )
         const public_outputs = JSON.parse(response.public_output)
         const card: ICardInfo = {
             card_number: response.card_number,
