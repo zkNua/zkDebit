@@ -11,7 +11,7 @@ const deploy = async () => {
   const CardVerifierRouter = await ethers.getContractFactory(contractMain);
   const cardVerifierRouterContract = await CardVerifierRouter.deploy(cardVerifierAddress);
 
-  await cardVerifierRouterContract.deploymentTransaction()?.wait(3);
+  await cardVerifierRouterContract.deploymentTransaction()?.wait(5);
 
   const cardVerifierRouterAddress = await cardVerifierRouterContract.getAddress();
 
