@@ -11,84 +11,80 @@ enum EStatus {
 }
 
 struct TransactionInfo {
-  uint amount;
+  uint64 amount;
+  bytes32 hashedNounce;
   EStatus status;
 }
+
 contract CardVerifierRouter {
-  ICardVerifier public immutable verifier;   
-  address public admin1;
-  // Placeholder for development admin2
-  address public admin2;
+    ICardVerifier public immutable verifier;   
+    address public admin1;
+    // Placeholder for development admin2
+    address public admin2;
 
-  mapping (string => TransactionInfo) public transactionHashedToDetails;  
-  mapping (address => string[]) walletToTransactionHashed;
-  
-  event VerifyLog(address indexed prover, string txHashed, bool proof);
-  event EnrollTransactionHashed(string txHashed, uint amount);
+    mapping (bytes32 => TransactionInfo) public transactionHashedToDetails;  
+    mapping (address => bytes32[]) walletToTransactionHashed;
+    event VerifyLog(address indexed prover, bytes32 txHashed, bool proof);
+    event EnrollTransactionHashed(bytes32 txHashed, uint amount);
 
-  constructor(ICardVerifier _verifier) {
-    verifier = _verifier;    
-    admin1 = msg.sender;
-  }
-
-  function verifyTransaction(
-    string memory _transactionHashed,
-    uint[2] calldata p_a,
-    uint[2][2] calldata p_b,
-    uint[2] calldata p_c,
-    uint[2] calldata pub_output
-  ) public {
-    require(
-      transactionHashedToDetails[_transactionHashed].status != EStatus.Approved, 
-      "Transaction already verified."
-    ); 
-    require(
-      transactionHashedToDetails[_transactionHashed].status != EStatus.Unknown,
-      "Invalid transaction nerver exist."
-    );
-
-    bool proof = verifier.verifyProof(p_a, p_b, p_c, pub_output);
-    require(proof, "Invalid proof.");
-    if (proof) {
-      transactionHashedToDetails[_transactionHashed].status = EStatus.Approved;
+    modifier OnlyAdmin() {
+        require(msg.sender == admin1 || msg.sender == admin2, "only admin");
+        _;
     }
-    else {
-      transactionHashedToDetails[_transactionHashed].status = EStatus.Rejected; 
+
+    constructor(ICardVerifier _verifier) {
+        verifier = _verifier;    
+        admin1 = msg.sender;
     }
-    emit VerifyLog(msg.sender, _transactionHashed, proof);
-    walletToTransactionHashed[msg.sender].push(_transactionHashed);
-  }   
 
-  function addTransactionHashedInfo(
-    string memory _transactionHashed,
-    uint _amount
-  ) external {
-    require(msg.sender == admin1 || msg.sender == admin2, 'only admin');
-    transactionHashedToDetails[_transactionHashed] = TransactionInfo({
-      amount: _amount,
-      status: EStatus.Pending
-    });
+    function verifyTransaction(
+        bytes32 _transactionHashed,
+        uint[2] calldata p_a,
+        uint[2][2] calldata p_b,
+        uint[2] calldata p_c,
+        uint[3] calldata pub_output
+    ) public {
+        require(transactionHashedToDetails[_transactionHashed].status != EStatus.Approved, "Transaction already verified."); 
+        require(transactionHashedToDetails[_transactionHashed].status != EStatus.Unknown,"Invalid transaction nerver exist.");
+        require(transactionHashedToDetails[_transactionHashed].hashedNounce != bytes32(pub_output[2]),"Invalid expected nounce");
+        
+        bool proof = verifier.verifyProof(p_a, p_b, p_c, pub_output);
+        require(proof, "Invalid proof.");
+        
+        transactionHashedToDetails[_transactionHashed].status = proof ? EStatus.Approved : EStatus.Rejected;
+        
+        emit VerifyLog(msg.sender, _transactionHashed, proof);
+        walletToTransactionHashed[msg.sender].push(_transactionHashed);
+    }   
 
-    emit EnrollTransactionHashed(_transactionHashed, _amount);
-  }
+    function addTransactionHashedInfo(
+        bytes32 _transactionHashed,
+        uint64 _amount,
+        uint256 _hashedNounce
+    ) external OnlyAdmin{
+        transactionHashedToDetails[_transactionHashed] = TransactionInfo({
+          amount: _amount,
+          status: EStatus.Pending,
+          hashedNounce: bytes32(_hashedNounce)
+        });
+        emit EnrollTransactionHashed(_transactionHashed, _amount);
+    }
 
-  function checkTransactionValid (
-    string memory _transactionHashed
-  ) public view returns(EStatus){
-    return transactionHashedToDetails[_transactionHashed].status; 
-  }
+    function getTransactionStatus(bytes32 _transactionHashed) public view returns (EStatus) {
+        return transactionHashedToDetails[_transactionHashed].status;
+    }
 
-  function getUserTransactions() public view returns( string[] memory){
-    return walletToTransactionHashed[msg.sender]; 
-  }
+    function getUserTransactions() public view returns(bytes32[] memory){
+        return walletToTransactionHashed[msg.sender]; 
+    }
 
-  function getUserTransactions(address walletAddress) public view returns(string[] memory ){
-    return walletToTransactionHashed[walletAddress]; 
-  }
+    function getUserTransactions(address walletAddress) public view returns(bytes32[] memory ){
+        return walletToTransactionHashed[walletAddress]; 
+    }
 
-  function setAdmin(address _admin2) public {
-    require(msg.sender == admin1 , 'only admin');
-    admin2 = _admin2;
-  }
+    function setAdmin(address _admin2) public OnlyAdmin {
+        admin2 = _admin2;
+    }
+
 
 }
