@@ -6,32 +6,31 @@ import {
     CardVerifier
 } from '../typechain-types';
 
-
-const proofA: any = [
-  '0x0fe79a65253571300924c141b4cd9f6bdab9078d605f4a52ab86f39fabe9b08c',
-  '0x205ebf8cdc6a1ad07930849b363150d4c19ea627d1c64568787a3e0135ef13c8'
-]
-
-const proofB: any = [
-  [
-    '0x2749af972ae8421d650ad3d2f90692264a953fe0187fffecd3f526a138725764',
-    '0x2392ea6434d1bce0b9499ff0fd291cfe20553d7236efa0d65ddacaab3ce322eb'
+const Proofs :any = {
+  "pi_a": [
+    "0x2da1d0e51fb2e86818c204893fb7143144aa85a05bdf75b6ace38b81d85a380a",
+    "0x00ac5dfac59fd43001b6c847c04b3f802cef4345ed2a9d1795559afd14c8136f"
   ],
-  [
-    '0x254a65b4619a4071af6f53255090373fbe6f46e4aaa653637a767377757e708e',
-    '0x063c629d46eedd4d58488d112a81aa5cf106bde5b36743f7ac3719b7ab0faa8a'
+  "pi_b": [
+    [
+      "0x035d81e5ef5199abd4fc52a872826970028ead4060eca8dc7c56927162ad8e60",
+      "0x001224a9e23677785357ed1e06a75d597fbd0ec0f0843e4f8aa5be16ab9d5d71"
+    ],
+    [
+      "0x2dce56926316a3fbe2f3045bbf7acb76fc4418b351893d4dd4211754d2d49c4e",
+      "0x27c7c11070029b2361f2355092d67d2ba83c37c7c7062bd834a530d4582e93cd"
+    ]
+  ],
+  "pi_c": [
+    "0x282d17d9b9d2db067af70d85f864c19b6a1d832739893eebe92427c946335879",
+    "0x12595458e07ce5e26b96c26aef19f7a198013f1d76058547e742a1320d0eca13"
+  ],
+  "public": [
+    "0x21ca69d01e33d961bd82d57b225fba692657b2dcbd094c75c8b8ba6faa481f65",
+    "0x02f91b1036fa5a3e587b7da89d792b7e631c32cabf2179ddd00ef5322dc9115c",
+    "0x1fbecfd87d0cdd9a90214add7fc074a49b50c692c4f641f59ba1ab160b8f0849"
   ]
-]
-
-const proofC: any = [
-  '0x2559c1d15395fd1a184fcd583c1b17c62c1cedab06acb938329142971610a93e',
-  '0x122c05c3eaf591bb28ad06fff14c7476580d0b85a7c64dbf7ea42bf0fb808034'
-]
-
-const publicSignals: any = [
-  '0x0a295629f4df155d579f2714da4c7e47ebf2f1d79de41c7dc9a81c46feae439c',
-  '0x2eb026d514ecb68f084f81de3fdb82e8866c440a7eae33c8f664429c6ecc3dac'
-]
+}
 
 describe("CardVerifier",function (){
     let cardVerifier : CardVerifier; 
@@ -70,25 +69,28 @@ describe("CardVerifier",function (){
     })
 
     it("Proof should valid computation & should stored to prover wallet",async function (){
-        const txHashed = "thisiscartcommitment";
+        const txHashed = "0x563285f6448010975c613815e1363bcdee6f4569bf1e9cca5c390376fe1090c7";
         const amount = 500;
+        const nonce = "0x1fbecfd87d0cdd9a90214add7fc074a49b50c692c4f641f59ba1ab160b8f0849"
         await cardVerifierRouter.connect(admin1).addTransactionHashedInfo(
             txHashed,
-            amount
+            amount,
+            nonce
         )
         // 1 mean pending tx 
-        expect(await cardVerifierRouter.checkTransactionValid(txHashed)).to.equal(1);
+        expect(await cardVerifierRouter.getTransactionStatus(txHashed)).to.equal(1);
 
         await cardVerifierRouter.connect(user).verifyTransaction(
-            txHashed, 
-            proofA, 
-            proofB, 
-            proofC, 
-            publicSignals
-        )
-        // 3 approve tx
-        expect(await cardVerifierRouter.checkTransactionValid(txHashed)).to.equal(3); 
+          txHashed,
+          Proofs.pi_a,
+          Proofs.pi_b,
+          Proofs.pi_c,
+          Proofs.public
+        );
 
+        // 3 approve tx
+        expect(await cardVerifierRouter.getTransactionStatus(txHashed)).to.equal(3); 
+        
         const Transacts = await cardVerifierRouter.connect(user)["getUserTransactions()"]();
     })
 })

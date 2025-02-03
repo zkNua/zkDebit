@@ -24,7 +24,7 @@ interface IBankVerifierRouter {
         view
         returns (string[] memory);
 
-    function getNounce() external view returns (uint _nounce);
+    function getnonce() external view returns (uint _nonce);
 
     function getTransactionInfo(string memory transaction_hashed)
         external
@@ -44,7 +44,7 @@ interface IBankVerifierRouter {
         uint[2] calldata p_a,
         uint[2][2] calldata p_b,
         uint[2] calldata p_c,
-        uint[2] calldata pub_output
+        uint[3] calldata pub_output
     ) external returns (bool);
 
     function addTransactionHashedInfo(
@@ -53,7 +53,7 @@ interface IBankVerifierRouter {
     ) external;
 
     // Ownership management
-    function renounceOwnership() external view;
+    function renonceOwnership() external view;
 
     function transferOwnership(address newOwner) external view;
 }

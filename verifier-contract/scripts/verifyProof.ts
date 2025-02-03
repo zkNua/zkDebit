@@ -33,7 +33,7 @@ async function verifyProof(txHashed : string){
     const provider = new ethers.JsonRpcProvider(process.env.RPC_SEPOLIA);
     
     const wallet_private_key = process.env.PROVER_PRIVATE_KEY_SEPOLIA;
-    const contract_address =  process.env.CARDVERIFIER_CONTRACT;
+    const contract_address =  process.env.CARDVERIFIER_ROUTER_CONTRACT;
     if (!wallet_private_key || !contract_address) {
         throw new Error("WALLET_PRIVATE_KEY is not defined in the environment variables.");
     }
