@@ -1,0 +1,35 @@
+{
+  "cardsDataBase": [
+    {
+      "walletAddress": "0x61532aB1dA425cFD60631b74ad2B990C8931a25D",
+      "card_number": "1234567890123456",
+      "balance": 0
+    }
+  ],
+  "cardAndProof": [
+    {
+      "card_number": "4242424242424242424242",
+      "pi3": "20758968703736891370751345315858927355504183875744374046651516274714619200554"
+    }
+  ],
+  "transaction_log": [
+    {
+      "transaction_hashed": "0x563285f6448010975c613815e1363bcdee6f4569bf1e9cca5c390376fe1090c7",
+      "amount": 100
+    },
+    {
+      "transaction_hashed": "0x9b80a80f578a9e8e722e791f755c66707228dd53811ba08ce52b624896545aa3",
+      "amount": 100
+    }
+  ],
+  "transaction_nonce": [
+    {
+      "transaction_hashed": "0x563285f6448010975c613815e1363bcdee6f4569bf1e9cca5c390376fe1090c7",
+      "nonce": "176461"
+    },
+    {
+      "transaction_hashed": "0x9b80a80f578a9e8e722e791f755c66707228dd53811ba08ce52b624896545aa3",
+      "nonce": "858552"
+    }
+  ]
+}
