@@ -40,6 +40,12 @@ export const cardVerifierRouterContractAbi = [
         name: "amount",
         type: "uint256",
       },
+      {
+        indexed: false,
+        internalType: "bytes32",
+        name: "nounceHashed",
+        type: "bytes32",
+      },
     ],
     name: "EnrollTransactionHashed",
     type: "event",
@@ -68,7 +74,7 @@ export const cardVerifierRouterContractAbi = [
     inputs: [
       { internalType: "bytes32", name: "_transactionHashed", type: "bytes32" },
       { internalType: "uint64", name: "_amount", type: "uint64" },
-      { internalType: "uint256", name: "_hashedNounce", type: "uint256" },
+      { internalType: "bytes32", name: "_hashedNounce", type: "bytes32" },
     ],
     name: "addTransactionHashedInfo",
     outputs: [],

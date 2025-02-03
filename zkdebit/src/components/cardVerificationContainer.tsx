@@ -6,6 +6,8 @@ import { CardVerification } from "@/services/generatingProof";
 import { format_generated_proof } from "@/utils/proofFormat";
 import VerifyProof from "@/services/verifyProof";
 
+import { saveAs } from "file-saver"; 
+
 type VerificationFormData = {
   cardNumber: string;
   pi1: string;
@@ -38,38 +40,48 @@ export default function CardVerificaitonContainer() {
       ...data,
       cardNumber: data.cardNumber.replace(/\s/g, ""), // Remove spaces from card number
     };
-
-    console.log("Verification Data Submitted:", formattedData);
     const public_outputs = [
       formattedData.pi1,
       formattedData.pi2,
       formattedData.pi3,
     ];
-
     try {
-      const response = await CardVerification(
+      const card_response = await CardVerification(
         public_outputs,
         formattedData.cardNumber,
         formattedData.transaction,
         formattedData.nonce
       );
-      console.log("Raw Response:", response);
-
-      const formatted_response = await format_generated_proof(
-        JSON.parse(response.proof),
-        JSON.parse(response.public_output)
-      );
-      console.log("Formatted Response:", formatted_response);
-
-      const proof_status = await VerifyProof(
-        formattedData.transaction,
-        formatted_response
-      );
-      console.log("Proof Verification Status:", proof_status);
-
-      setVerificationStatus(
-        proof_status ? "Verification Successful" : "Verification Failed"
-      );
+      const response  = await fetch("/api/verify-proof", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          proofs: card_response,
+          hashed_transaction: formattedData.transaction
+        })
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Error: `);
+      }
+  
+      console.log(response)
+      // // Save proof as a JSON file
+      // const jsonData = {
+      //   transactionHash: formattedData.transaction,
+      //   nonce: formattedData.nonce,
+      //   cardNumber: formattedData.cardNumber,
+      //   public_outputs,
+      //   proof,
+      // };
+      // const blob = new Blob([JSON.stringify(jsonData, null, 2)], {
+      //   type: "application/json",
+      // });
+      // saveAs(blob, "verification-proof.json");
+  
+      setVerificationStatus("Verification Successful");
     } catch (error) {
       console.error("Error in Proof Verification:", error);
       setVerificationStatus("Verification Failed: An error occurred.");

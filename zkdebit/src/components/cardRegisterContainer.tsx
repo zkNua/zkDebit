@@ -3,7 +3,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 
 import { CardRegister } from "@/services/generatingProof";
-import { UpdateCards } from "@/db/cards";
+import { UpdateCards } from "@/services/card-store";
 
 import { ICardInfo } from "@/interface/card";
 

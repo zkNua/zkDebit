@@ -35,10 +35,10 @@ export async function CardVerification(
     public_output: string[],
     card_number: string, 
     transaction: string,
-    nounce: string
+    nonce: string
 ){
     const hashed_transaction = hashStringToBigInt(transaction);
-    const hashed_nounce = hashStringToBigInt(nounce)
+    const hashed_nonce = hashStringToBigInt(nonce)
 
     const { proof, publicSignals } = await snarkjs.groth16.fullProve(
         {
@@ -47,7 +47,7 @@ export async function CardVerification(
             "pi2": public_output[1],
             "pi3": public_output[2],
             "transaction": hashed_transaction,
-            "nonce": hashed_nounce,
+            "nonce": hashed_nonce,
         },
         "/assets/cardVerification/cardVerification.wasm",
         "/assets/cardVerification/cardVerification_0001.zkey"

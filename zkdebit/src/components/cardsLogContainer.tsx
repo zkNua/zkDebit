@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-import { LogsCards } from '@/db/cards'; // Import your card data
+import { LogsCards } from '@/services/card-store'; 
 import { ICardInfo } from '@/interface/card';
 
 type Props = {};
