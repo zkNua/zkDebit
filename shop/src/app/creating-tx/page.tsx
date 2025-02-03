@@ -8,7 +8,7 @@ type Props = {}
 export default function page({}: Props) {
     const OnCreatingTx = async ()=>{
         const payload = {
-            "pi3" : "01234567890",
+            "pi3" : "20758968703736891370751345315858927355504183875744374046651516274714619200554",
             "goods" : [
                 {
                     "name" : "Shirt",
@@ -27,9 +27,8 @@ export default function page({}: Props) {
         try { 
             const response = await CreatingTransaction(
                 payload.pi3,
-                payload.goods
+                payload. goods
             );
-            console.log(response); 
         }catch(err){
             console.log(err);
         }

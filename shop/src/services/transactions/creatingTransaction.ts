@@ -8,20 +8,15 @@ export default async function CreatingTransaction(
     goods: iGoodPayload[]
 ){
     try{
-        if (!pi3 || typeof pi3 !== "string" ){
-            throw new Error ("Invalid proof of your card setup phase");
-        }
         if (goods.length === 0 ) { 
             throw new Error ("Goods is missing ")
         }
         const totalPrice = goods.reduce((sum, item) => sum + item.ppp * item.amount, 0);         
         const stringGoods = JSON.stringify(goods);
-        const transactionHashed = crypto
+        const transactionHashed = "0x"+crypto
         .createHash("sha256")
         .update(`${stringGoods} ${pi3}`)
         .digest("hex")
-
-        console.log(transactionHashed)
         
         const response = await fetch(`https://localhost:3000/api/transaction/create`,{
             method: "POST",
@@ -34,7 +29,7 @@ export default async function CreatingTransaction(
                 pi3: pi3
             })
         })
-        return response
+        return response.status
 
     }catch (err){
         console.log(err)
